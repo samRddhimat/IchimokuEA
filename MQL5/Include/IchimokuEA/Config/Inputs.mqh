@@ -8,6 +8,7 @@
 //--- EA Mode
 sinput group           "=== EA Mode ==="
 input int    InpEAMode             = 0;       // EA Mode: 0=Trend/Swing, 1=Scalp
+input int    InpMaxPositions       = 3;       // Max simultaneous open positions
 
 //--- Ichimoku Signal
 sinput group           "=== Ichimoku Signal ==="

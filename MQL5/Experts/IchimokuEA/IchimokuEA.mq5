@@ -152,8 +152,8 @@ void ManageOpenPositions()
 //+------------------------------------------------------------------+
 void TryNewEntry()
 {
-   // Only one position at a time per symbol
-   if(CountOurPositions() > 0) return;
+   // Allow up to InpMaxPositions simultaneous positions
+   if(CountOurPositions() >= InpMaxPositions) return;
 
    // Evaluate signal (new-bar gated inside CIchimokuSignal)
    IchimokuSignalResult sig = g_signal.Evaluate();
