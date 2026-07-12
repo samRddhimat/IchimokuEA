@@ -21,6 +21,7 @@
 #include <IchimokuEA/Signal/IchimokuSignal.mqh>
 #include <IchimokuEA/Risk/StopCalculator.mqh>
 #include <IchimokuEA/Risk/PositionSizing.mqh>
+#include <IchimokuEA/Risk/DynamicSizing.mqh>
 #include <IchimokuEA/TradeManagement/TradeTypes.mqh>
 #include <IchimokuEA/TradeManagement/TradeManager.mqh>
 #include <IchimokuEA/TradeManagement/PositionRegistry.mqh>
@@ -30,7 +31,7 @@
 //--- subsystems
 CIchimokuSignal  g_signal;
 CStopCalculator  g_stopCalc;
-CPositionSizing  g_sizing;
+CDynamicSizing   g_dynSizing;  // replaces g_sizing — wraps CPositionSizing with anti-martingale
 CTradeManager    g_mgr;
 CPositionRegistry g_registry;
 COrderExecutor   g_exec;
@@ -186,7 +187,7 @@ void TryNewEntry()
    // Size the position
    const double equity = AccountInfoDouble(ACCOUNT_EQUITY);
    string sizeReason   = "";
-   const double lot    = g_sizing.CalculateLot(equity, entryPx, stopPx, sizeReason);
+   const double lot    = g_dynSizing.CalculateLot(equity, entryPx, stopPx, sizeReason);
    if(lot <= 0.0)
    {
       g_log.Note("ENTRY_SKIP", g_symbol, "sizing: " + sizeReason);
@@ -225,7 +226,7 @@ int OnInit()
    if(!g_stopCalc.Init(g_symbol))
       return INIT_FAILED;
 
-   g_sizing.Init(g_symbol);
+   g_dynSizing.Init(g_symbol);
    g_mgr.Init(GetPointer(g_signal));
    g_exec.Init();
    g_log.Init(g_symbol, InpLogToCSV);
@@ -278,9 +279,32 @@ void OnTick()
       {
          lastBar = curBar;
          g_log.Note("DIAG", g_symbol,
-                    StringFormat("positions=%d lastSignal=%s",
-                                  CountOurPositions(), g_lastSignal));
+                    StringFormat("positions=%d lastSignal=%s %s",
+                                  CountOurPositions(), g_lastSignal,
+                                  g_dynSizing.StatusString()));
       }
    }
+}
+
+//+------------------------------------------------------------------+
+//| Feed closed trade results to DynamicSizing anti-martingale       |
+//+------------------------------------------------------------------+
+void OnTradeTransaction(const MqlTradeTransaction &trans,
+                        const MqlTradeRequest &request,
+                        const MqlTradeResult &result)
+{
+   if(trans.type != TRADE_TRANSACTION_DEAL_ADD) return;
+   const ulong deal = trans.deal;
+   if(deal == 0) return;
+   if(!HistoryDealSelect(deal)) return;
+   if(HistoryDealGetInteger(deal, DEAL_MAGIC) != InpMagicNumber) return;
+   if(HistoryDealGetInteger(deal, DEAL_ENTRY) != DEAL_ENTRY_OUT &&
+      HistoryDealGetInteger(deal, DEAL_ENTRY) != DEAL_ENTRY_OUT_BY) return;
+
+   const double profit = HistoryDealGetDouble(deal, DEAL_PROFIT);
+   g_dynSizing.OnTradeClosed(profit);
+   g_log.Note("TRADE_CLOSED", g_symbol,
+              StringFormat("deal=%d profit=%.2f %s",
+                            (long)deal, profit, g_dynSizing.StatusString()));
 }
 //+------------------------------------------------------------------+

@@ -44,9 +44,15 @@ input double InpScalpProfitTargetR   = 1.5;  // Scalp: TP R multiple
 //--- Position Sizing
 sinput group           "=== Position Sizing ==="
 input int    InpSizeMode           = 0;       // 0=Risk% per trade, 1=Fixed lot
-input double InpRiskPercent        = 1.0;     // Risk per trade as % of equity
+input double InpRiskPercent        = 1.0;     // Base risk per trade as % of equity
 input double InpFixedLot           = 0.01;    // Fixed lot size (InpSizeMode=1)
 input double InpMaxLot             = 10.0;    // Maximum lot size cap
+
+//--- Dynamic Sizing (Anti-Martingale)
+sinput group           "=== Dynamic Sizing (Anti-Martingale) ==="
+input bool   InpDynamicSizing      = false;   // Enable dynamic sizing (anti-martingale)
+input double InpSizeStepR          = 0.25;    // Risk increase per consecutive win (e.g. 0.25 = +25% per win)
+input int    InpResetAfterNLosses  = 2;       // Reset to base size after N consecutive losses
 
 //--- Execution
 sinput group           "=== Execution ==="
