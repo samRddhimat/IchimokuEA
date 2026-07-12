@@ -17,3 +17,5 @@ Thumbs.db
 *.sql
 *.csv
 *.zip
+*.set
+*.pdf
