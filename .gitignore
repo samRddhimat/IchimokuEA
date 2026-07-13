@@ -19,3 +19,5 @@ Thumbs.db
 *.zip
 *.set
 *.pdf
+*.txt
+*.json
