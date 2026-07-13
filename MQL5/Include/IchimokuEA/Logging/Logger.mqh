@@ -31,7 +31,7 @@ public:
       m_enabled = enabled;
       if(!m_enabled) return;
       const string fname = BuildFileName(symbol);
-      m_handle = FileOpen(fname, FILE_WRITE | FILE_CSV | FILE_ANSI);
+      m_handle = FileOpen(fname, FILE_WRITE | FILE_CSV | FILE_ANSI | FILE_SHARE_READ);
       if(m_handle == INVALID_HANDLE)
       { Print("Logger: failed to open ", fname); return; }
       FileWrite(m_handle,
