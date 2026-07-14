@@ -154,11 +154,22 @@ void ManageOpenPositions()
 void TryNewEntry()
 {
    // Allow up to InpMaxPositions simultaneous positions
-   if(CountOurPositions() >= InpMaxPositions) return;
+   if(CountOurPositions() >= InpMaxPositions)
+   {
+      g_lastSignal = StringFormat("max positions reached (%d/%d)",
+                                   CountOurPositions(), InpMaxPositions);
+      return;
+   }
 
    // Evaluate signal (new-bar gated inside CIchimokuSignal)
    IchimokuSignalResult sig = g_signal.Evaluate();
-   if(sig.signal == ICHI_NONE) return;
+   if(sig.signal == ICHI_NONE)
+   {
+      // Update lastSignal with rejection reason — skip "same bar" noise
+      if(sig.reason != "same bar" && sig.reason != "")
+         g_lastSignal = "no signal: " + sig.reason;
+      return;
+   }
 
    const bool isBuy = (sig.signal == ICHI_BUY);
 
@@ -171,6 +182,7 @@ void TryNewEntry()
 
    if(stopPx <= 0.0)
    {
+      g_lastSignal = "ENTRY_SKIP: stop computation failed";
       g_log.Note("ENTRY_SKIP", g_symbol, "stop computation failed");
       return;
    }
@@ -178,6 +190,8 @@ void TryNewEntry()
    // Check stop acceptability
    if(!g_stopCalc.IsStopAcceptable(entryPx, stopPx))
    {
+      g_lastSignal = StringFormat("ENTRY_SKIP: stop too wide entry=%.5f stop=%.5f (>%.1fx ATR)",
+                                   entryPx, stopPx, InpMaxStopRMult);
       g_log.Note("ENTRY_SKIP", g_symbol,
                  StringFormat("stop too wide: entry=%.5f stop=%.5f (>%.1fx ATR)",
                                entryPx, stopPx, InpMaxStopRMult));
@@ -190,6 +204,7 @@ void TryNewEntry()
    const double lot    = g_dynSizing.CalculateLot(equity, entryPx, stopPx, sizeReason);
    if(lot <= 0.0)
    {
+      g_lastSignal = "ENTRY_SKIP: sizing failed — " + sizeReason;
       g_log.Note("ENTRY_SKIP", g_symbol, "sizing: " + sizeReason);
       return;
    }
