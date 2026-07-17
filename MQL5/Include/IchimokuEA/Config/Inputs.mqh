@@ -72,6 +72,7 @@ input string InpTradeComment       = "IchimokuEA"; // Order comment prefix
 
 //--- Logging
 sinput group           "=== Logging ==="
+input bool   InpShowDashboard      = true;    // Show floating draggable dashboard on chart
 input bool   InpLogToCSV           = true;    // Write trade log to CSV
 input bool   InpDiagnosticLog      = false;   // Write diagnostic heartbeat to CSV
 input string InpCSVPrefix          = "IchimokuEA"; // CSV filename prefix

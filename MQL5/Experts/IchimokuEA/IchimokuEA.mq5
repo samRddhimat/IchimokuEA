@@ -27,6 +27,7 @@
 #include <IchimokuEA/TradeManagement/PositionRegistry.mqh>
 #include <IchimokuEA/Execution/OrderExecutor.mqh>
 #include <IchimokuEA/Logging/Logger.mqh>
+#include <IchimokuEA/Logging/Dashboard.mqh>
 
 //--- subsystems
 CIchimokuSignal  g_signal;
@@ -36,6 +37,7 @@ CTradeManager    g_mgr;
 CPositionRegistry g_registry;
 COrderExecutor   g_exec;
 CLogger          g_log;
+CDashboard       g_dash;
 
 string g_symbol      = "";
 string g_lastSignal  = "none";
@@ -245,6 +247,9 @@ int OnInit()
    g_mgr.Init(GetPointer(g_signal));
    g_exec.Init();
    g_log.Init(g_symbol, InpLogToCSV);
+   g_dash.Init(g_symbol, InpShowDashboard);
+   // Enable mouse move events for dashboard drag
+   ChartSetInteger(0, CHART_EVENT_MOUSE_MOVE, true);
 
    if(!g_exec.IsHedging())
    {
@@ -270,6 +275,7 @@ void OnDeinit(const int reason)
    g_signal.Deinit();
    g_stopCalc.Deinit();
    g_log.Note("DEINIT", g_symbol, "EA stopped reason=" + IntegerToString(reason));
+   g_dash.Deinit();
    g_log.Deinit();
 }
 
@@ -302,6 +308,30 @@ void OnTick()
                                   g_dynSizing.StatusString()));
       }
    }
+
+   // Dashboard render — updates every tick
+   g_dash.Render(g_symbol,
+                 g_signal.GetHandle(),
+                 InpDisplacement,
+                 InpTimeframe,
+                 CountOurPositions(),
+                 g_lastSignal,
+                 g_signal.GetBarsSinceCross(),
+                 g_signal.GetLastATR(),
+                 g_signal.GetLastADX(),
+                 g_dynSizing.CurrentMultiplier(),
+                 g_dynSizing.ConsecutiveWins(),
+                 g_dynSizing.ConsecutiveLosses(),
+                 InpRiskPercent);
+}
+
+//+------------------------------------------------------------------+
+//| Dashboard drag event handler                                      |
+//+------------------------------------------------------------------+
+void OnChartEvent(const int id, const long& lparam,
+                  const double& dparam, const string& sparam)
+{
+   g_dash.OnEvent(id, lparam, dparam, sparam);
 }
 
 //+------------------------------------------------------------------+
