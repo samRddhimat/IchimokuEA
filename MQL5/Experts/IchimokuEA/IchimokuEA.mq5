@@ -294,8 +294,11 @@ void OnTick()
       {
          lastBar = curBar;
          g_log.Note("DIAG", g_symbol,
-                    StringFormat("positions=%d lastSignal=%s %s",
+                    StringFormat("positions=%d lastSignal=%s ATR=%.2f ADX=%.1f cross=%dbars %s",
                                   CountOurPositions(), g_lastSignal,
+                                  g_signal.GetLastATR(),
+                                  g_signal.GetLastADX(),
+                                  g_signal.GetBarsSinceCross(),
                                   g_dynSizing.StatusString()));
       }
    }

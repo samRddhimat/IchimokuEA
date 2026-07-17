@@ -19,6 +19,15 @@ input int    InpSenkouB            = 52;      // Senkou Span B period
 input int    InpDisplacement       = 26;      // Cloud displacement
 input double InpNearPct            = 0.01;    // Near/far cloud threshold (1%=0.01)
 
+//--- Phase 1 Signal Filters
+sinput group           "=== Signal Filters (Phase 1) ==="
+input int    InpFreshnessBarLimit      = 3;      // TK cross freshness: allow entry N bars after cross (0=off)
+input bool   InpRequireFutureCloudAgree= true;   // Require future cloud to agree with trade direction
+input double InpADXMinimum            = 0.0;    // Minimum ADX for trend strength (0=off, suggested 25)
+input double InpATRMinimum            = 0.0;    // Minimum ATR in points (0=off, avoids low volatility)
+input int    InpMaxSpreadPoints        = 0;      // Maximum spread in points (0=off, suggested 50)
+input bool   InpSessionFilterEnabled   = false;  // Restrict entries to London + LDN/NY session only
+
 //--- Stop Loss
 sinput group           "=== Stop Loss ==="
 input int    InpStopBasis          = 3;       // Stop basis: 0=Cloud 1=Kijun 2=ATR 3=Combined
