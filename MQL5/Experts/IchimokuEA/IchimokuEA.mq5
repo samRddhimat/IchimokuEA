@@ -20,6 +20,7 @@
 #include <IchimokuEA/Config/Inputs.mqh>
 #include <IchimokuEA/Signal/IchimokuSignal.mqh>
 #include <IchimokuEA/Signal/KijunPullbackSignal.mqh>
+#include <IchimokuEA/Signal/KumoBreakSignal.mqh>
 #include <IchimokuEA/Risk/StopCalculator.mqh>
 #include <IchimokuEA/Risk/PositionSizing.mqh>
 #include <IchimokuEA/Risk/DynamicSizing.mqh>
@@ -33,6 +34,7 @@
 //--- subsystems
 CIchimokuSignal      g_signal;
 CKijunPullbackSignal g_kpSignal;
+CKumoBreakSignal     g_kbSignal;
 CStopCalculator  g_stopCalc;
 CDynamicSizing   g_dynSizing;  // replaces g_sizing — wraps CPositionSizing with anti-martingale
 CTradeManager    g_mgr;
@@ -184,6 +186,35 @@ void TryNewEntry()
             if(kpSig.reason != "same bar" && kpSig.reason != "" &&
                StringFind(kpSig.reason, "KP module disabled") < 0)
                g_lastSignal = kpSig.reason;
+
+            // ── Phase 3: Kumo Breakout (M3) ───────────────────────
+            if(InpKumoBreakModule)
+            {
+               IchimokuSignalResult kbSig = g_kbSignal.Evaluate();
+               if(kbSig.signal != ICHI_NONE)
+                  sig = kbSig;
+               else
+               {
+                  if(kbSig.reason != "same bar" && kbSig.reason != "" &&
+                     StringFind(kbSig.reason, "KB module disabled") < 0)
+                     g_lastSignal = kbSig.reason;
+                  return;
+               }
+            }
+            else return;
+         }
+      }
+      else if(InpKumoBreakModule)
+      {
+         // M2 disabled, M3 enabled — evaluate M3 directly
+         IchimokuSignalResult kbSig = g_kbSignal.Evaluate();
+         if(kbSig.signal != ICHI_NONE)
+            sig = kbSig;
+         else
+         {
+            if(kbSig.reason != "same bar" && kbSig.reason != "" &&
+               StringFind(kbSig.reason, "KB module disabled") < 0)
+               g_lastSignal = kbSig.reason;
             return;
          }
       }
@@ -230,7 +261,8 @@ void TryNewEntry()
 
    // Build comment — include module tag
    const string modeTag   = (InpEAMode == 0) ? "TREND" : "SCALP";
-   const string moduleTag = (StringFind(sig.reason, "M2_KP") >= 0) ? "M2_KP" : "M1_TK";
+   const string moduleTag = StringFind(sig.reason, "M2_KP") >= 0 ? "M2_KP" :
+                            StringFind(sig.reason, "M3_KB") >= 0 ? "M3_KB" : "M1_TK";
    const string comment   = InpTradeComment + "|" + modeTag +
                             "|" + moduleTag +
                             "|sc=" + IntegerToString(sig.score);
@@ -261,6 +293,11 @@ int OnInit()
 
    // Phase 2: Kijun Pullback module shares handles with IchimokuSignal
    g_kpSignal.Init(g_symbol, g_signal.GetHandle(),
+                   g_signal.GetATRHandle(), g_signal.GetADXHandle(),
+                   InpDisplacement);
+
+   // Phase 3: Kumo Breakout module shares handles with IchimokuSignal
+   g_kbSignal.Init(g_symbol, g_signal.GetHandle(),
                    g_signal.GetATRHandle(), g_signal.GetADXHandle(),
                    InpDisplacement);
 
@@ -298,6 +335,7 @@ void OnDeinit(const int reason)
 {
    g_signal.Deinit();
    g_kpSignal.Deinit();
+   g_kbSignal.Deinit();
    g_stopCalc.Deinit();
    g_log.Note("DEINIT", g_symbol, "EA stopped reason=" + IntegerToString(reason));
    g_dash.Deinit();

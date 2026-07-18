@@ -33,6 +33,12 @@ sinput group           "=== Kijun Pullback Module (Phase 2) ==="
 input bool   InpKijunPullbackModule = false;  // Enable Kijun Pullback continuation entry (Module 2)
 input int    InpKPMinTrendBars      = 3;      // Min bars price must be outside cloud before KP entry
 input double InpKPKijunZonePct      = 0.005;  // Max distance from Kijun as % of price (0.5%=0.005)
+
+//--- Phase 3 Kumo Breakout Module
+sinput group           "=== Kumo Breakout Module (Phase 3) ==="
+input bool   InpKumoBreakModule    = false;   // Enable Fresh Kumo Breakout entry (Module 3)
+input int    InpKBFreshnessLimit   = 3;       // Max bars since cloud breakout (1-5)
+input int    InpKBATRLookback      = 3;       // ATR expanding check: ATR[1] > ATR[N bars ago]
 input int    InpStopBasis          = 3;       // Stop basis: 0=Cloud 1=Kijun 2=ATR 3=Combined
 input double InpStopATRMult        = 1.5;     // ATR multiplier for stop distance
 input double InpStopBufferPts      = 10.0;    // Buffer points beyond cloud/Kijun
