@@ -19,6 +19,7 @@
 
 #include <IchimokuEA/Config/Inputs.mqh>
 #include <IchimokuEA/Signal/IchimokuSignal.mqh>
+#include <IchimokuEA/Signal/KijunPullbackSignal.mqh>
 #include <IchimokuEA/Risk/StopCalculator.mqh>
 #include <IchimokuEA/Risk/PositionSizing.mqh>
 #include <IchimokuEA/Risk/DynamicSizing.mqh>
@@ -30,7 +31,8 @@
 #include <IchimokuEA/Logging/Dashboard.mqh>
 
 //--- subsystems
-CIchimokuSignal  g_signal;
+CIchimokuSignal      g_signal;
+CKijunPullbackSignal g_kpSignal;
 CStopCalculator  g_stopCalc;
 CDynamicSizing   g_dynSizing;  // replaces g_sizing — wraps CPositionSizing with anti-martingale
 CTradeManager    g_mgr;
@@ -163,14 +165,29 @@ void TryNewEntry()
       return;
    }
 
-   // Evaluate signal (new-bar gated inside CIchimokuSignal)
+   // Evaluate M1 signal (new-bar gated inside CIchimokuSignal)
    IchimokuSignalResult sig = g_signal.Evaluate();
+
+   // If M1 has no signal, try Phase 2 Kijun Pullback (Module 2)
    if(sig.signal == ICHI_NONE)
    {
-      // Update lastSignal with rejection reason — skip "same bar" noise
       if(sig.reason != "same bar" && sig.reason != "")
          g_lastSignal = "no signal: " + sig.reason;
-      return;
+
+      if(InpKijunPullbackModule)
+      {
+         IchimokuSignalResult kpSig = g_kpSignal.Evaluate();
+         if(kpSig.signal != ICHI_NONE)
+            sig = kpSig; // promote KP signal
+         else
+         {
+            if(kpSig.reason != "same bar" && kpSig.reason != "" &&
+               StringFind(kpSig.reason, "KP module disabled") < 0)
+               g_lastSignal = kpSig.reason;
+            return;
+         }
+      }
+      else return;
    }
 
    const bool isBuy = (sig.signal == ICHI_BUY);
@@ -211,10 +228,12 @@ void TryNewEntry()
       return;
    }
 
-   // Build comment
-   const string modeTag = (InpEAMode == 0) ? "TREND" : "SCALP";
-   const string comment = InpTradeComment + "|" + modeTag +
-                          "|sc=" + IntegerToString(sig.score);
+   // Build comment — include module tag
+   const string modeTag   = (InpEAMode == 0) ? "TREND" : "SCALP";
+   const string moduleTag = (StringFind(sig.reason, "M2_KP") >= 0) ? "M2_KP" : "M1_TK";
+   const string comment   = InpTradeComment + "|" + modeTag +
+                            "|" + moduleTag +
+                            "|sc=" + IntegerToString(sig.score);
 
    // Execute
    const double initialRisk = MathAbs(entryPx - stopPx);
@@ -239,6 +258,11 @@ int OnInit()
    if(!g_signal.Init(g_symbol, InpTenkan, InpKijun, InpSenkouB,
                      InpDisplacement, InpNearPct))
       return INIT_FAILED;
+
+   // Phase 2: Kijun Pullback module shares handles with IchimokuSignal
+   g_kpSignal.Init(g_symbol, g_signal.GetHandle(),
+                   g_signal.GetATRHandle(), g_signal.GetADXHandle(),
+                   InpDisplacement);
 
    if(!g_stopCalc.Init(g_symbol))
       return INIT_FAILED;
@@ -273,6 +297,7 @@ int OnInit()
 void OnDeinit(const int reason)
 {
    g_signal.Deinit();
+   g_kpSignal.Deinit();
    g_stopCalc.Deinit();
    g_log.Note("DEINIT", g_symbol, "EA stopped reason=" + IntegerToString(reason));
    g_dash.Deinit();

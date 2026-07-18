@@ -155,7 +155,7 @@ private:
       res.cloud        = "—";
       res.tkGap        = "—";
       res.chikou       = "—";
-      res.primaryColor = 0x595959;
+      res.primaryColor = (color)0x595959;
 
       if(handle == INVALID_HANDLE) return res;
 
@@ -227,19 +227,19 @@ private:
 
       // Primary shape
       if(price >= cloudBot && price <= cloudTop)
-      { res.primary = "CONSOLIDATION"; res.primaryColor = 0x595959; return res; }
+      { res.primary = "CONSOLIDATION"; res.primaryColor = (color)0x595959; return res; }
 
       if(futureTwist)
       { res.primary = price > cloudTop ? "CLOUD TWIST ▲" : "CLOUD TWIST ▼";
-        res.primaryColor = price > cloudTop ? 0x375623 : 0x9C0006; return res; }
+        res.primaryColor = price > cloudTop ? (color)0x375623 : (color)0x9C0006; return res; }
 
       // Recent TK cross (last 3 bars)
       for(int i = 1; i <= 3 && i+1 < 5; i++)
       {
          if(tenkan[i] > kijun[i] && tenkan[i+1] <= kijun[i+1] && price > cloudTop)
-         { res.primary = "TK CROSS BULL"; res.primaryColor = 0x375623; return res; }
+         { res.primary = "TK CROSS BULL"; res.primaryColor = (color)0x375623; return res; }
          if(tenkan[i] < kijun[i] && tenkan[i+1] >= kijun[i+1] && price < cloudBot)
-         { res.primary = "TK CROSS BEAR"; res.primaryColor = 0x9C0006; return res; }
+         { res.primary = "TK CROSS BEAR"; res.primaryColor = (color)0x9C0006; return res; }
       }
 
       // Recent Kumo breakout (last 3 bars)
@@ -250,9 +250,9 @@ private:
          double cl   = iClose(symbol, tf, i);
          double clp  = iClose(symbol, tf, i+1);
          if(cl > pTop && clp <= pTop)
-         { res.primary = "KUMO BREAK ▲"; res.primaryColor = 0x375623; return res; }
+         { res.primary = "KUMO BREAK ▲"; res.primaryColor = (color)0x375623; return res; }
          if(cl < pBot && clp >= pBot)
-         { res.primary = "KUMO BREAK ▼"; res.primaryColor = 0x9C0006; return res; }
+         { res.primary = "KUMO BREAK ▼"; res.primaryColor = (color)0x9C0006; return res; }
       }
 
       // Flat Kijun compression
@@ -260,23 +260,23 @@ private:
       if(MathAbs(kijun[0]-kijun[1]) < pt*3 &&
          MathAbs(kijun[1]-kijun[2]) < pt*3 &&
          MathAbs(kijun[2]-kijun[3]) < pt*3)
-      { res.primary = "FLAT KIJUN"; res.primaryColor = 0x595959; return res; }
+      { res.primary = "FLAT KIJUN"; res.primaryColor = (color)0x595959; return res; }
 
       // Kijun pullback
       if(price > cloudTop && tenkan[0] > kijun[0])
       {
          if(MathAbs(price - kijun[0]) / price < 0.005)
-         { res.primary = "KIJUN PULLBK ▲"; res.primaryColor = 0x375623; return res; }
-         res.primary = "UPTREND"; res.primaryColor = 0x375623; return res;
+         { res.primary = "KIJUN PULLBK ▲"; res.primaryColor = (color)0x375623; return res; }
+         res.primary = "UPTREND"; res.primaryColor = (color)0x375623; return res;
       }
       if(price < cloudBot && tenkan[0] < kijun[0])
       {
          if(MathAbs(price - kijun[0]) / price < 0.005)
-         { res.primary = "KIJUN PULLBK ▼"; res.primaryColor = 0x9C0006; return res; }
-         res.primary = "DOWNTREND"; res.primaryColor = 0x9C0006; return res;
+         { res.primary = "KIJUN PULLBK ▼"; res.primaryColor = (color)0x9C0006; return res; }
+         res.primary = "DOWNTREND"; res.primaryColor = (color)0x9C0006; return res;
       }
 
-      res.primary = "MIXED"; res.primaryColor = 0x595959;
+      res.primary = "MIXED"; res.primaryColor = (color)0x595959;
       return res;
    }
 
@@ -380,7 +380,7 @@ public:
       KVRow("S1_SYM",  row, "Symbol",    symbol); row++;
       KVRow("S1_TF",   row, "Timeframe", EnumToString(tf)); row++;
       KVRow("S1_MODE", row, "Mode",      modeStr,
-            InpEAMode==0 ? 0x375623 : 0x595959); row++;
+            InpEAMode==0 ? (color)0x375623 : (color)0x595959); row++;
       KVRow("S1_MGC",  row, "Magic",
             IntegerToString(InpMagicNumber)); row++;
 
@@ -388,26 +388,26 @@ public:
       SectionRow("S2",     row, "── SIGNAL STATUS"); row++;
       KVRow("S2_POS",  row, "Positions",
             StringFormat("%d / %d", positions, InpMaxPositions),
-            positions > 0 ? 0x375623 : 0x595959); row++;
+            positions > 0 ? (color)0x375623 : (color)0x595959); row++;
 
       string sigShort = lastSignal;
       if(StringLen(sigShort) > 26) sigShort = StringSubstr(sigShort,0,26)+"..";
       color sigClr = StringFind(lastSignal,"BUY")>=0  ? 0x375623 :
-                     StringFind(lastSignal,"SELL")>=0 ? 0x9C0006 : 0x595959;
+                     StringFind(lastSignal,"SELL")>=0 ? (color)0x9C0006 : (color)0x595959;
       KVRow("S2_SIG",  row, "Signal", sigShort, sigClr); row++;
 
       string freshStr = barsSinceCross >= 0
                         ? StringFormat("%d bar(s) ago", barsSinceCross)
                         : "no cross yet";
       color freshClr = (barsSinceCross >= 0 && barsSinceCross <= InpFreshnessBarLimit)
-                       ? 0x375623 : 0x595959;
+                       ? (color)0x375623 : (color)0x595959;
       KVRow("S2_FRE",  row, "Cross age", freshStr, freshClr); row++;
 
       // ── Section 3: Market ─────────────────────────────────────────
       SectionRow("S3",     row, "── MARKET METRICS"); row++;
       KVRow("S3_ATR",  row, "ATR(14)",
             atr > 0 ? StringFormat("%.2f", atr) : "—",
-            atr > 5 ? 0x375623 : 0x9C0006); row++;
+            atr > 5 ? (color)0x375623 : (color)0x9C0006); row++;
       KVRow("S3_ADX",  row, "ADX(14)",
             adx > 0 ? StringFormat("%.1f", adx) : "—",
             adx >= 25 ? 0x375623 : adx >= 20 ? 0x595959 : 0x9C0006); row++;
@@ -419,10 +419,10 @@ public:
       SectionRow("S4",     row, "── DYNAMIC SIZING"); row++;
       KVRow("S4_MUL",  row, "Multiplier",
             StringFormat("%.2fx", dynMult),
-            dynMult > 1.0 ? 0x375623 : 0x595959); row++;
+            dynMult > 1.0 ? (color)0x375623 : (color)0x595959); row++;
       KVRow("S4_STK",  row, "Streak",
             StringFormat("W:%d  L:%d", dynWins, dynLosses),
-            dynWins > 0 ? 0x375623 : dynLosses > 0 ? 0x9C0006 : 0x595959); row++;
+            dynWins > 0 ? 0x375623 : dynLosses > 0 ? (color)0x9C0006 : (color)0x595959); row++;
       KVRow("S4_EFF",  row, "Eff. Risk%",
             StringFormat("%.2f%%", riskPct * dynMult),
             0x595959); row++;
@@ -433,13 +433,13 @@ public:
             shape.primaryColor); row++;
       KVRow("S5_CLD",  row, "Cloud",     shape.cloud,
             StringFind(shape.cloud,"ABOVE")>=0 ? 0x375623 :
-            StringFind(shape.cloud,"BELOW")>=0 ? 0x9C0006 : 0x595959); row++;
+            StringFind(shape.cloud,"BELOW")>=0 ? (color)0x9C0006 : (color)0x595959); row++;
       KVRow("S5_TKG",  row, "TK Gap",   shape.tkGap,
             shape.tkGap=="WIDENING" ? 0x375623 :
-            shape.tkGap=="NARROWING"? 0x9C0006 : 0x595959); row++;
+            shape.tkGap=="NARROWING"? (color)0x9C0006 : (color)0x595959); row++;
       KVRow("S5_CHI",  row, "Chikou",   shape.chikou,
             StringFind(shape.chikou,"FREE")>=0 ? 0x375623 :
-            shape.chikou=="TANGLED"  ? 0x9C0006 : 0x595959); row++;
+            shape.chikou=="TANGLED"  ? (color)0x9C0006 : (color)0x595959); row++;
 
       m_totalRows = row;
       ChartRedraw(0);

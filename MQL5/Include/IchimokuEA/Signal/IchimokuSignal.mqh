@@ -233,7 +233,9 @@ public:
       if(m_adxHandle != INVALID_HANDLE) { IndicatorRelease(m_adxHandle); m_adxHandle = INVALID_HANDLE; }
    }
 
-   int GetHandle() const { return m_handle; }
+   int GetHandle()    const { return m_handle; }
+   int GetATRHandle() const { return m_atrHandle; }
+   int GetADXHandle() const { return m_adxHandle; }
 
    //-------------------------------------------------------------------
    // Pure signal logic — testable with synthetic values

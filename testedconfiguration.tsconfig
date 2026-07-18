@@ -1,0 +1,12 @@
+File							Config				Net Profit
+R3plus_Freshness1_BEST.set		★★ PRODUCTION		+$7,694
+R3_Baseline.set					Original R3			+$2,600
+R3_ProfitLock.set				R3+PL				+$1,811
+R3_DynamicSizing.set			Dynamic Sizing ON	+$3,714
+FutureCloud_Only.set			FC filter only		+$331
+Freshness1_FutureCloud.set		Both filters		+$2,995
+Freshness2.set					F=2					+$15,079
+Freshness3.set					F=3					+$20,864
+M2_KP_Default.set				M2 default			+$1,936
+M2_KP_ProfitLock.set			M2+PL				+$2,377
+M2_KP_Tightened.set				M2 tightened		+$4,781
