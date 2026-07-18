@@ -36,7 +36,7 @@ input double InpKPKijunZonePct      = 0.005;  // Max distance from Kijun as % of
 
 //--- Phase 3 Kumo Breakout Module
 sinput group           "=== Kumo Breakout Module (Phase 3) ==="
-input bool   InpKumoBreakModule    = false;   // Enable Fresh Kumo Breakout entry (Module 3)
+input bool   InpKumoBreakModule    = false;   // Enable Fresh Kumo Breakout entry (Module 3) 
 input int    InpKBFreshnessLimit   = 3;       // Max bars since cloud breakout (1-5)
 input int    InpKBATRLookback      = 3;       // ATR expanding check: ATR[1] > ATR[N bars ago]
 input int    InpStopBasis          = 3;       // Stop basis: 0=Cloud 1=Kijun 2=ATR 3=Combined

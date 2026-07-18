@@ -356,6 +356,7 @@ public:
                const double riskPct)
    {
       if(!m_enabled) return;
+      if(MQLInfoInteger(MQL_TESTER)) return;  // skip during backtesting — zero overhead
 
       IchiShapeResult shape = DetectShape(ichiHandle, symbol, tf, displacement);
       const long   spread   = SymbolInfoInteger(symbol, SYMBOL_SPREAD);
