@@ -9,3 +9,30 @@ Junction created for C:\Users\Srinivasan\AppData\Roaming\MetaQuotes\Terminal\537
 Junction created for C:\Users\Srinivasan\AppData\Roaming\MetaQuotes\Terminal\53785E099C927DB68A545C249CDBCE06\MQL5\Include\IchimokuEA <<===>> D:\Repository\IchimokuEA\MQL5\Include\IchimokuEA
 
 Junction created for C:\Users\Srinivasan\AppData\Roaming\MetaQuotes\Terminal\53785E099C927DB68A545C249CDBCE06\MQL5\Scripts\IchimokuEA <<===>> D:\Repository\IchimokuEA\MQL5\Scripts\IchimokuEA
+
+
+/*
+
+Exactly right. The two systems are completely independent:
+
+						InpEquityProfitLock=false		InpEquityProfitLock=true
+Existing profit lock	Follows InpProfitLock setting	Follows InpProfitLock setting
+Equity profit lock		Skipped entirely				Activates immediately at trigger%
+
+So there are four possible combinations:
+InpEquityProfitLock		InpProfitLock		Behaviour		
+false					false				No profit locking at all — original SL until BE/trail/cloud exit
+false					true				Original R-based tier lock (activates after BE at 1.0R)
+true					false				New equity lock only (activates immediately at trigger%)
+true					true				Both active — equity lock fires first (before BE), R-based lock fires after BE
+
+For your use case — you want the equity lock to protect small early profits — set:
+
+InpEquityProfitLock = true
+InpEPLTriggerPct   = 0.02   (0.02% of equity)
+InpEPLLockPct      = 87.5   (lock 87.5% of profit)
+InpProfitLock      = false  (don't need the R-based lock on top)
+
+This gives you the immediate protection you described — as soon as profit reaches $20 on a $100k account, 87.5% is locked in and the SL trails continuously from there.
+
+*/
