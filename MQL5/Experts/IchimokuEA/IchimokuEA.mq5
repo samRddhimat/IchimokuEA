@@ -331,6 +331,84 @@ int OnInit()
 }
 
 //+------------------------------------------------------------------+
+//| Export tester deal history to CSV — called from OnDeinit         |
+//+------------------------------------------------------------------+
+void ExportTesterDeals()
+{
+   if(!HistorySelect(0, TimeCurrent())) return;
+   const int total = HistoryDealsTotal();
+   if(total == 0) return;
+
+   MqlDateTime dt;
+   TimeToStruct(TimeCurrent(), dt);
+   const string fname = StringFormat("%s_%s_Deals_%04d%02d%02d.csv",
+                                      InpCSVPrefix, g_symbol,
+                                      dt.year, dt.mon, dt.day);
+
+   const int fh = FileOpen(fname, FILE_WRITE | FILE_CSV | FILE_ANSI |
+                            FILE_SHARE_READ | FILE_SHARE_WRITE);
+   if(fh == INVALID_HANDLE) { Print("ExportDeals: cannot create ", fname); return; }
+
+   FileWrite(fh, "Ticket","Time","Symbol","Direction","Entry",
+             "Volume","Price","SL","TP",
+             "Profit","Swap","Commission","NetProfit",
+             "RunningBalance","Comment","Magic");
+
+   int    exported = 0;
+   double balance  = 0;
+   const int digits = (int)SymbolInfoInteger(g_symbol, SYMBOL_DIGITS);
+
+   for(int i = 0; i < total; i++)
+   {
+      const ulong ticket = HistoryDealGetTicket(i);
+      if(ticket == 0) continue;
+
+      const long type = HistoryDealGetInteger(ticket, DEAL_TYPE);
+      if(type == DEAL_TYPE_BALANCE || type == DEAL_TYPE_CREDIT ||
+         type == DEAL_TYPE_CHARGE  || type == DEAL_TYPE_CORRECTION)
+      { balance += HistoryDealGetDouble(ticket, DEAL_PROFIT); continue; }
+
+      const long magic = HistoryDealGetInteger(ticket, DEAL_MAGIC);
+      if(magic != InpMagicNumber) continue;
+
+      const long   entry  = HistoryDealGetInteger(ticket, DEAL_ENTRY);
+      const double profit = HistoryDealGetDouble(ticket,  DEAL_PROFIT);
+      const double swap   = HistoryDealGetDouble(ticket,  DEAL_SWAP);
+      const double comm   = HistoryDealGetDouble(ticket,  DEAL_COMMISSION);
+      const double net    = profit + swap + comm;
+      balance += net;
+
+      const string dir = (type == DEAL_TYPE_BUY)  ? "BUY" : "SELL";
+      const string ent = (entry == DEAL_ENTRY_IN)     ? "IN"     :
+                         (entry == DEAL_ENTRY_OUT)    ? "OUT"    :
+                         (entry == DEAL_ENTRY_INOUT)  ? "INOUT"  : "OUT_BY";
+
+      FileWrite(fh,
+         (long)ticket,
+         TimeToString((datetime)HistoryDealGetInteger(ticket, DEAL_TIME),
+                       TIME_DATE|TIME_SECONDS),
+         HistoryDealGetString(ticket, DEAL_SYMBOL),
+         dir, ent,
+         DoubleToString(HistoryDealGetDouble(ticket, DEAL_VOLUME), 2),
+         DoubleToString(HistoryDealGetDouble(ticket, DEAL_PRICE),  digits),
+         DoubleToString(HistoryDealGetDouble(ticket, DEAL_SL),     digits),
+         DoubleToString(HistoryDealGetDouble(ticket, DEAL_TP),     digits),
+         DoubleToString(profit, 2),
+         DoubleToString(swap,   2),
+         DoubleToString(comm,   2),
+         DoubleToString(net,    2),
+         DoubleToString(balance,2),
+         HistoryDealGetString(ticket,  DEAL_COMMENT),
+         (long)magic);
+      exported++;
+   }
+
+   FileClose(fh);
+   Print(StringFormat("ExportDeals: %d deals exported to MQL5\\Files\\%s",
+                       exported, fname));
+}
+
+//+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
    g_signal.Deinit();
@@ -338,6 +416,12 @@ void OnDeinit(const int reason)
    g_kbSignal.Deinit();
    g_stopCalc.Deinit();
    g_log.Note("DEINIT", g_symbol, "EA stopped reason=" + IntegerToString(reason));
+
+   Print("DEINIT "+  g_symbol + "EA stopped reason=" + IntegerToString(reason));
+   // Export deal history to CSV when running in Strategy Tester
+   if(MQLInfoInteger(MQL_TESTER) && InpLogToCSV)
+      ExportTesterDeals();
+
    g_dash.Deinit();
    g_log.Deinit();
 }

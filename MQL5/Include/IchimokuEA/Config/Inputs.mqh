@@ -36,7 +36,7 @@ input double InpKPKijunZonePct      = 0.005;  // Max distance from Kijun as % of
 
 //--- Phase 3 Kumo Breakout Module
 sinput group           "=== Kumo Breakout Module (Phase 3) ==="
-input bool   InpKumoBreakModule    = false;   // Enable Fresh Kumo Breakout entry (Module 3) 
+input bool   InpKumoBreakModule    = false;   // Enable Fresh Kumo Breakout entry (Module 3)
 input int    InpKBFreshnessLimit   = 3;       // Max bars since cloud breakout (1-5)
 input int    InpKBATRLookback      = 3;       // ATR expanding check: ATR[1] > ATR[N bars ago]
 input int    InpStopBasis          = 3;       // Stop basis: 0=Cloud 1=Kijun 2=ATR 3=Combined
@@ -47,12 +47,18 @@ input double InpMaxStopRMult       = 3.0;     // Skip trade if stop > N x ATR
 //--- Trade Management
 sinput group           "=== Trade Management ==="
 input double InpBreakEvenAtR       = 1.0;     // Move SL to BE when profit reaches NR
-input bool   InpProfitLock         = false;   // Enable profit lock (dollar-tier SL tightening)
+input bool   InpProfitLock         = false;   // Enable profit lock (dollar-tier SL tightening after BE)
 input double InpProfitTargetR      = 1.5;     // TP as R multiple (0=trail only)
 input double InpPartialClosePct    = 50.0;    // % of position to close at TP (0=close all)
 input bool   InpKijunTrail         = true;    // Trail SL to Kijun-sen after BE
 input bool   InpCloudExit          = true;    // Exit if price closes inside cloud
 input int    InpTimeExitCandles    = 15;      // Exit after N candles if no progress (0=off)
+
+//--- Equity Profit Lock
+sinput group           "=== Equity Profit Lock ==="
+input bool   InpEquityProfitLock   = false;   // Enable equity-based profit lock (activates immediately, no BE required)
+input double InpEPLTriggerPct      = 0.02;    // Trigger when profit reaches X% of equity (0.02 = 0.02%)
+input double InpEPLLockPct         = 87.5;    // Lock this % of current profit continuously (87.5 = lock 87.5%)
 
 //--- Scalp Mode
 sinput group           "=== Scalp Mode (InpEAMode=1) ==="

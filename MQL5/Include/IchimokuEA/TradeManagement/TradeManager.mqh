@@ -88,6 +88,54 @@ public:
 
       const double profitR = ProfitInR(c);
 
+      // ── Equity Profit Lock (runs before BE — activates immediately) ──
+      // Triggers as soon as profit reaches InpEPLTriggerPct% of equity
+      // Trails continuously every tick locking InpEPLLockPct% of profit
+      if(InpEquityProfitLock)
+      {
+         const double tickSize    = SymbolInfoDouble(c.symbol, SYMBOL_TRADE_TICK_SIZE);
+         const double tickValue   = SymbolInfoDouble(c.symbol, SYMBOL_TRADE_TICK_VALUE);
+         if(tickSize > 0.0 && tickValue > 0.0 && c.volume > 0.0)
+         {
+            const double priceMoved  = (c.type > 0)
+                                        ? (c.currentPrice - c.entry)
+                                        : (c.entry - c.currentPrice);
+            const double dollarPerPt = (tickValue / tickSize) * c.volume;
+            const double dollarPnL   = priceMoved * dollarPerPt;
+
+            // Only act when profit is positive
+            if(dollarPnL > 0.0)
+            {
+               const double equity    = AccountInfoDouble(ACCOUNT_EQUITY);
+               const double trigger   = equity * (InpEPLTriggerPct / 100.0);
+
+               if(dollarPnL >= trigger)
+               {
+                  // Lock InpEPLLockPct% of current dollar profit
+                  const double protectAmt  = dollarPnL * (InpEPLLockPct / 100.0);
+                  const double protectDist = protectAmt / dollarPerPt;
+                  const double point       = SymbolInfoDouble(c.symbol, SYMBOL_POINT);
+
+                  const double eplSL = (c.type > 0)
+                                        ? NormalizeDouble(c.entry + protectDist,
+                                           (int)SymbolInfoInteger(c.symbol, SYMBOL_DIGITS))
+                                        : NormalizeDouble(c.entry - protectDist,
+                                           (int)SymbolInfoInteger(c.symbol, SYMBOL_DIGITS));
+
+                  if(eplSL > 0.0 && IsImprovement(c.type, eplSL, c.currentSL))
+                  {
+                     a.modifySL = true;
+                     a.newSL    = eplSL;
+                     a.reason   = StringFormat(
+                        "EPL: profit=$%.2f trigger=$%.2f lock=%.1f%% protects=$%.2f newSL=%.5f",
+                        dollarPnL, trigger, InpEPLLockPct, protectAmt, eplSL);
+                     return a;
+                  }
+               }
+            }
+         }
+      }
+
       // 1. Emergency cloud exit
       if(InpCloudExit && m_signal != NULL && profitR > 0.0)
       {
